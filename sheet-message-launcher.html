@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sheet Message Launcher</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@600;800&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+/* Layout: one narrow column. Upload, template, then a single message card stepped with Prev / Next. */
+:root{
+  --bg:#f2f3f8; --surface:#ffffff; --sunken:#e8eaf2; --line:#d5d8e4; --fg:#151a2c; --muted:#5b6179;
+  --accent:#3542cf; --accent-fg:#ffffff; --accent-soft:#e2e4fb;
+  --ok:#1d7448; --ok-soft:#dcf0e4; --bad:#b0261d; --bad-soft:#fadfdb;
+  --mark:#fff0b0; --mark-fg:#3a2f00;
+  --f-display:"Schibsted Grotesk","Helvetica Neue",Arial,sans-serif;
+  --f-body:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0e1120; --surface:#161a2c; --sunken:#1e2338; --line:#2b3150; --fg:#e7e9f4; --muted:#9a9fba;
+  --accent:#8c95ff; --accent-fg:#0e1120; --accent-soft:#252b58;
+  --ok:#62cf9b; --ok-soft:#163324; --bad:#ff8b81; --bad-soft:#3b1a17;
+  --mark:#4a4115; --mark-fg:#fff4c4; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#0e1120; --surface:#161a2c; --sunken:#1e2338; --line:#2b3150; --fg:#e7e9f4; --muted:#9a9fba;
+  --accent:#8c95ff; --accent-fg:#0e1120; --accent-soft:#252b58;
+  --ok:#62cf9b; --ok-soft:#163324; --bad:#ff8b81; --bad-soft:#3b1a17;
+  --mark:#4a4115; --mark-fg:#fff4c4; color-scheme:dark }
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;background:var(--sunken);align-self:flex-start}
+.seg button{font:inherit;font-size:.88rem;border:0;background:transparent;color:var(--muted);padding:8px 14px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg);font-weight:600}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:24px 48px}
+.wrap{max-width:640px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+h1{font-family:var(--f-display);font-size:1.6rem;font-weight:800;margin:0;letter-spacing:-.01em}
+p{margin:0}
+.muted{color:var(--muted)}
+.small{font-size:.85rem}
+.mono{font-family:var(--f-mono)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-family:var(--f-mono);font-size:.82rem;border:1px solid var(--line);background:var(--surface);color:var(--fg);padding:5px 10px;border-radius:7px;cursor:pointer}
+.chip:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+.lbl{font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+
+.drop{position:relative;border:1.5px dashed var(--line);border-radius:10px;padding:18px;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;background:var(--surface);cursor:pointer;transition:border-color .15s,background .15s}
+.drop:hover,.drop.over{border-color:var(--accent);background:var(--accent-soft)}
+.drop input{position:absolute;width:1px;height:1px;opacity:0}
+.drop:focus-within{outline:2px solid var(--accent);outline-offset:2px}
+.err{font-size:.88rem;background:var(--bad-soft);color:var(--bad);padding:8px 11px;border-radius:8px}
+
+.field{display:flex;flex-direction:column;gap:6px}
+textarea{font:inherit;font-family:var(--f-mono);font-size:.9rem;line-height:1.55;color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px;width:100%;min-height:150px;resize:vertical}
+textarea:focus-visible,button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:14px}
+.chead{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 12px}
+.pos{font-family:var(--f-mono);font-size:.85rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.who{font-family:var(--f-display);font-size:1.25rem;font-weight:600}
+.num{font-family:var(--f-mono);color:var(--muted)}
+.tag{margin-left:auto;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:3px 8px;border-radius:6px;background:var(--ok-soft);color:var(--ok)}
+.tag.bad{background:var(--bad-soft);color:var(--bad)}
+.msg{white-space:pre-wrap;word-break:break-word;background:var(--sunken);border-radius:10px;padding:14px;min-height:6em}
+.msg mark{background:var(--mark);color:var(--mark-fg);border-radius:3px;padding:0 2px}
+.msg .miss{background:var(--bad-soft);color:var(--bad);border-radius:3px;padding:0 3px;font-family:var(--f-mono);font-size:.82rem}
+
+.nav{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center}
+.btn{font:inherit;font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:6px;border-radius:9px;padding:11px 16px;border:1px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer;text-decoration:none;white-space:nowrap}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn:disabled,.btn[aria-disabled="true"]{opacity:.4;pointer-events:none}
+@media (max-width:420px){ .nav{grid-template-columns:1fr 1fr} .nav .primary{grid-column:1 / -1;grid-row:1} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div>
+    <h1>Sheet Message Launcher</h1>
+    <p class="muted">Your sheet is read in this browser only. Nothing is uploaded.</p>
+  </div>
+
+  <label class="drop" id="drop" for="file">
+    <input type="file" id="file" accept=".xlsx,.xls,.xlsm,.csv,.ods">
+    <strong id="dropTitle">Drop your Excel sheet here, or click to choose</strong>
+    <span class="muted small" id="dropSub">Column A = WhatsApp number. Row 1 = column names.</span>
+  </label>
+  <p class="err" id="err" hidden></p>
+
+  <div class="field">
+    <label class="lbl" for="tpl">Message</label>
+    <div class="chips" id="chips" hidden></div>
+    <textarea id="tpl" spellcheck="true" placeholder="Hi {{name}}, your webinar is on {{date}}..."></textarea>
+    <span class="muted small" id="cols">Upload a sheet to see its columns here. Click a column to insert it.</span>
+  </div>
+
+  <div class="field">
+    <span class="lbl">Open chats in</span>
+    <div class="seg" role="group" aria-label="Open chats in">
+      <button type="button" id="modeWeb" aria-pressed="true">WhatsApp Web</button>
+      <button type="button" id="modeApp" aria-pressed="false">WhatsApp app</button>
+    </div>
+  </div>
+
+  <section class="card" aria-live="polite">
+    <div class="chead">
+      <span class="pos" id="pos"></span>
+      <span class="who" id="who"></span>
+      <span class="num" id="num"></span>
+      <span class="tag" id="tag" hidden></span>
+    </div>
+    <p class="msg" id="msg"></p>
+    <div class="nav">
+      <button type="button" class="btn" id="prev">← Prev</button>
+      <a class="btn primary" id="open" href="#" target="whatsapp_tab">Open in WhatsApp</a>
+      <button type="button" class="btn" id="next">Next →</button>
+    </div>
+  </section>
+</div>
+
+<script>
+(function(){
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const norm = k => String(k).trim().toLowerCase().replace(/[\s_\-]+/g,'_');
+const RE = /\{\{\s*([^{}]+?)\s*\}\}/g;
+const COUNTRY = '91'; // added to plain 10-digit numbers
+const get = (k,d) => { try{ const v = localStorage.getItem(k); return v == null ? d : v }catch(e){ return d } };
+const put = (k,v) => { try{ localStorage.setItem(k,v) }catch(e){} };
+
+let headers = [], rows = [], i = 0, opened = new Set(), loaded = false, mode = get('wsl-mode', 'web');
+
+function setData(raw, fmt){
+  const h = raw.findIndex(r => r && r.some(c => String(c).trim() !== ''));
+  if(h < 0) throw new Error('This sheet is empty. Put column names in row 1 and numbers in column A.');
+  const hdr = fmt[h] || raw[h];
+  headers = hdr.map((c, j) => String(c).trim() || (j === 0 ? 'whatsapp_number' : 'column_' + (j + 1)));
+  rows = [];
+  for(let r = h + 1; r < raw.length; r++){
+    const a = raw[r] || [], f = fmt[r] || [];
+    if(!a.some(c => String(c).trim() !== '')) continue;
+    const vals = {};
+    headers.forEach((hd, j) => { const k = norm(hd); if(!(k in vals)) vals[k] = String(f[j] ?? a[j] ?? '').trim(); });
+    rows.push({ raw:a[0], vals });
+  }
+  i = 0; opened = new Set();
+}
+
+function phone(v){
+  let s = typeof v === 'number' ? String(Math.round(v)) : String(v ?? '').trim();
+  if(/^\d+(\.\d+)?e\+\d+$/i.test(s)) s = String(Math.round(Number(s)));
+  const plus = s.startsWith('+');
+  let d = s.replace(/\D/g, '');
+  if(!plus && d.startsWith('00')) d = d.slice(2);
+  if(!plus && d.length === 11 && d.startsWith('0')) d = COUNTRY + d.slice(1);
+  else if(!plus && d.length === 10) d = COUNTRY + d;
+  return d;
+}
+const fill = (tpl, row) => tpl.replace(RE, (m, k) => row.vals[norm(k)] ?? '');
+function fillHTML(tpl, row){
+  let out = '', last = 0;
+  for(const m of tpl.matchAll(RE)){
+    out += esc(tpl.slice(last, m.index));
+    const v = row.vals[norm(m[1])];
+    out += v ? `<mark>${esc(v)}</mark>` : `<span class="miss">${esc(m[0])} missing</span>`;
+    last = m.index + m[0].length;
+  }
+  return out + esc(tpl.slice(last));
+}
+
+function render(){
+  const tpl = $('#tpl').value;
+  const chips = $('#chips');
+  chips.hidden = !loaded;
+  chips.innerHTML = headers.slice(1).map(h => `<button type="button" class="chip" data-ins="${esc(h)}">{{${esc(h)}}}</button>`).join('');
+  $('#cols').hidden = loaded;
+  $('#modeWeb').setAttribute('aria-pressed', mode === 'web');
+  $('#modeApp').setAttribute('aria-pressed', mode === 'app');
+  const open = $('#open');
+  open.textContent = mode === 'web' ? 'Open in WhatsApp Web' : 'Open in WhatsApp app';
+  if(!rows.length){
+    $('#pos').textContent = '0 / 0'; $('#who').textContent = loaded ? 'No rows found in this sheet' : 'Upload a sheet to start'; $('#num').textContent = '';
+    $('#msg').textContent = ''; $('#tag').hidden = true;
+    open.setAttribute('aria-disabled', 'true'); open.href = '#';
+    $('#prev').disabled = $('#next').disabled = true; return;
+  }
+  const row = rows[i], num = phone(row.raw), ok = num.length >= 8 && num.length <= 15;
+  $('#pos').textContent = `${i + 1} / ${rows.length}`;
+  $('#who').textContent = (headers[1] && row.vals[norm(headers[1])]) || 'Row ' + (i + 1);
+  $('#num').textContent = num ? '+' + num : 'no number';
+  $('#msg').innerHTML = fillHTML(tpl, row);
+  const tag = $('#tag');
+  tag.hidden = !(opened.has(i) || !ok);
+  tag.className = 'tag' + (ok ? '' : ' bad');
+  tag.textContent = ok ? 'Opened' : 'Invalid number';
+  const text = encodeURIComponent(fill(tpl, row));
+  if(ok){ open.href = mode === 'web' ? `https://web.whatsapp.com/send?phone=${num}&text=${text}` : `https://wa.me/${num}?text=${text}`; open.removeAttribute('aria-disabled'); }
+  else { open.href = '#'; open.setAttribute('aria-disabled', 'true'); }
+  $('#prev').disabled = i === 0;
+  $('#next').disabled = i === rows.length - 1;
+}
+
+function readFile(file){
+  $('#err').hidden = true;
+  const csv = /\.csv$/i.test(file.name);
+  const fr = new FileReader();
+  fr.onload = () => {
+    try{
+      if(typeof XLSX === 'undefined') throw new Error('The spreadsheet reader did not load. Reload the page and try again.');
+      const wb = csv ? XLSX.read(fr.result, {type:'string'}) : XLSX.read(new Uint8Array(fr.result), {type:'array'});
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      setData(XLSX.utils.sheet_to_json(ws, {header:1, raw:true, defval:''}), XLSX.utils.sheet_to_json(ws, {header:1, raw:false, defval:''}));
+      loaded = true;
+      $('#dropTitle').textContent = file.name;
+      $('#dropSub').textContent = `${rows.length} rows loaded. Click or drop to replace.`;
+      render();
+    }catch(e){ $('#err').textContent = e.message || 'That file could not be read as a spreadsheet.'; $('#err').hidden = false; }
+  };
+  fr.onerror = () => { $('#err').textContent = 'Could not read that file.'; $('#err').hidden = false; };
+  csv ? fr.readAsText(file) : fr.readAsArrayBuffer(file);
+}
+
+const drop = $('#drop');
+$('#file').addEventListener('change', e => { const f = e.target.files[0]; if(f) readFile(f); e.target.value = ''; });
+['dragenter','dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over'); }));
+['dragleave','drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('over'); }));
+drop.addEventListener('drop', e => { const f = e.dataTransfer.files[0]; if(f) readFile(f); });
+
+$('#tpl').addEventListener('input', render);
+$('#modeWeb').addEventListener('click', () => { mode = 'web'; put('wsl-mode', mode); render(); });
+$('#modeApp').addEventListener('click', () => { mode = 'app'; put('wsl-mode', mode); render(); });
+$('#chips').addEventListener('click', e => {
+  const b = e.target.closest('[data-ins]'); if(!b) return;
+  const ta = $('#tpl');
+  ta.focus(); ta.setRangeText(`{{${b.dataset.ins}}}`, ta.selectionStart, ta.selectionEnd, 'end');
+  render();
+});
+$('#prev').addEventListener('click', () => { if(i > 0){ i--; render(); } });
+$('#next').addEventListener('click', () => { if(i < rows.length - 1){ i++; render(); } });
+$('#open').addEventListener('click', e => {
+  if(e.currentTarget.getAttribute('aria-disabled') === 'true'){ e.preventDefault(); return; }
+  const at = i; setTimeout(() => { opened.add(at); render(); }, 0);
+});
+document.addEventListener('keydown', e => {
+  if(e.target.closest('textarea')) return;
+  if(e.key === 'ArrowRight') $('#next').click();
+  if(e.key === 'ArrowLeft') $('#prev').click();
+});
+
+render();
+})();
+</script>
+</body>
+</html>
