@@ -7,197 +7,126 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
 :root{
-  --bg:#f4f5f2; --surface:#ffffff; --sunken:#eef0ec; --line:#dde1da; --fg:#16201a; --muted:#5f6b63;
-  --accent:#128c5a; --accent-fg:#ffffff; --accent-soft:#e0f4e9; --accent-line:#9fd8bb;
-  --chat:#efeae2; --bubble:#d9fdd3; --bubble-fg:#111b21; --hl:rgba(18,140,90,.18);
-  --bad:#b3261e; --bad-soft:#fde3e0;
+  --bg:#f6f6f4; --surface:#ffffff; --sunken:#efefec; --line:#dcdcd7; --fg:#1b1d1c; --muted:#646864;
+  --accent:#15803d; --accent-fg:#ffffff; --accent-soft:#e6f3ea;
+  --bad:#b3261e; --bad-soft:#fbe4e1;
   --f-body:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;
 }
 @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
-  --bg:#0f1512; --surface:#17201b; --sunken:#1e2923; --line:#2c3a32; --fg:#e6ede8; --muted:#97a69c;
-  --accent:#3fcf8e; --accent-fg:#06140d; --accent-soft:#163626; --accent-line:#2b6b4b;
-  --chat:#0b141a; --bubble:#005c4b; --bubble-fg:#e9edef; --hl:rgba(255,255,255,.16);
-  --bad:#ff8a80; --bad-soft:#3d1a17; color-scheme:dark }}
+  --bg:#121413; --surface:#1a1d1b; --sunken:#222624; --line:#323733; --fg:#e8eae8; --muted:#9ca29d;
+  --accent:#4ade80; --accent-fg:#0b1a10; --accent-soft:#1c3324;
+  --bad:#ff8a80; --bad-soft:#3b1b18; color-scheme:dark }}
 :root[data-theme="dark"]{
-  --bg:#0f1512; --surface:#17201b; --sunken:#1e2923; --line:#2c3a32; --fg:#e6ede8; --muted:#97a69c;
-  --accent:#3fcf8e; --accent-fg:#06140d; --accent-soft:#163626; --accent-line:#2b6b4b;
-  --chat:#0b141a; --bubble:#005c4b; --bubble-fg:#e9edef; --hl:rgba(255,255,255,.16);
-  --bad:#ff8a80; --bad-soft:#3d1a17; color-scheme:dark }
+  --bg:#121413; --surface:#1a1d1b; --sunken:#222624; --line:#323733; --fg:#e8eae8; --muted:#9ca29d;
+  --accent:#4ade80; --accent-fg:#0b1a10; --accent-soft:#1c3324;
+  --bad:#ff8a80; --bad-soft:#3b1b18; color-scheme:dark }
 
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:15px;line-height:1.5;
-  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 64px}
-.wrap{max-width:620px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
-h1{font-size:1.7rem;font-weight:800;margin:0;letter-spacing:-.015em}
-h2{font-size:1.05rem;font-weight:700;margin:0}
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 56px}
+.wrap{max-width:600px;margin:0 auto;display:flex;flex-direction:column;gap:22px}
+h1{font-size:1.5rem;font-weight:700;margin:0}
 p{margin:0}
 .muted{color:var(--muted)}
 .small{font-size:.86rem}
-svg{flex:none}
 .vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
-/* Steps */
-.step{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:12px}
-.sh{display:flex;align-items:center;gap:10px}
-.n{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:.82rem;font-weight:700;background:var(--sunken);color:var(--muted);border:1px solid var(--line)}
-.step.done .n{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
-.step.done .n b{display:none}
-.step:not(.done) .n svg{display:none}
-.sh .aside{margin-left:auto;font-size:.85rem;color:var(--muted);font-variant-numeric:tabular-nums}
-.hint{font-size:.86rem;color:var(--muted)}
+.field{display:flex;flex-direction:column;gap:8px}
+.lbl{font-weight:600}
 .link{font:inherit;color:var(--accent);background:none;border:0;padding:0;cursor:pointer;text-decoration:underline;text-underline-offset:2px}
 
-/* Upload */
-.drop{border:1.5px dashed var(--line);border-radius:12px;padding:22px 16px;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center;background:var(--sunken);cursor:pointer;transition:border-color .15s,background .15s}
-.drop svg{color:var(--accent);margin-bottom:4px}
-.drop:hover,.drop.over{border-color:var(--accent);background:var(--accent-soft)}
+.drop{border:1.5px dashed var(--line);border-radius:10px;padding:18px;text-align:center;background:var(--surface);cursor:pointer}
+.drop:hover,.drop.over{border-color:var(--accent)}
 #file:focus-visible + .drop{outline:2px solid var(--accent);outline-offset:2px}
-.filerow{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;background:var(--accent-soft);border:1px solid var(--accent-line)}
-.filerow svg{color:var(--accent)}
-.filerow div{min-width:0;flex:1}
-.filerow strong{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.err{font-size:.88rem;background:var(--bad-soft);color:var(--bad);padding:9px 12px;border-radius:9px}
+.err{font-size:.88rem;background:var(--bad-soft);color:var(--bad);padding:8px 11px;border-radius:8px}
 
-/* Variables + editor */
-.vars{display:flex;flex-direction:column;gap:8px}
-.vlbl{font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
-.chips{display:flex;flex-wrap:wrap;gap:8px}
-.chip{font:inherit;font-size:.9rem;font-weight:600;display:inline-flex;align-items:center;gap:5px;border:1px solid var(--accent-line);background:var(--accent-soft);color:var(--accent);padding:6px 12px 6px 9px;border-radius:999px;cursor:pointer;touch-action:manipulation;transition:transform .08s}
-.chip:hover{border-color:var(--accent)}
-.chip:active{transform:scale(.96)}
-.chips .empty{font-size:.88rem;color:var(--muted);padding:6px 0}
-.editor{position:relative;min-height:150px;padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--surface);white-space:pre-wrap;word-break:break-word;line-height:1.7;cursor:text}
-.editor:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
-.editor.empty::before{content:attr(data-ph);position:absolute;inset:14px;color:var(--muted);pointer-events:none}
-.pill{display:inline-block;padding:0 8px;margin:0 1px;border-radius:999px;background:var(--accent);color:var(--accent-fg);font-size:.86em;font-weight:600;line-height:1.6;vertical-align:baseline;user-select:all;-webkit-user-select:all;cursor:default}
-.pill.bad{background:var(--bad);color:var(--surface)}
+.chips{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.chip{font:inherit;font-size:.88rem;border:1px solid var(--line);background:var(--surface);color:var(--fg);padding:4px 11px;border-radius:999px;cursor:pointer;touch-action:manipulation}
+.chip:hover{border-color:var(--accent);color:var(--accent)}
+.editor{position:relative;min-height:140px;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);white-space:pre-wrap;word-break:break-word;line-height:1.65;cursor:text}
+.editor:focus{outline:none;border-color:var(--accent)}
+.editor.empty::before{content:attr(data-ph);position:absolute;inset:12px;color:var(--muted);pointer-events:none}
+.pill{display:inline-block;padding:0 7px;margin:0 1px;border-radius:5px;background:var(--accent-soft);color:var(--accent);font-size:.9em;font-weight:600;line-height:1.55;user-select:all;-webkit-user-select:all;cursor:default}
+.pill.bad{background:var(--bad-soft);color:var(--bad)}
 
-/* Mode choice */
-.opts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-@media (max-width:520px){ .opts{grid-template-columns:1fr} }
-.opt{position:relative;display:flex;gap:12px;align-items:flex-start;padding:14px;border:1.5px solid var(--line);border-radius:12px;cursor:pointer;background:var(--surface);transition:border-color .15s,background .15s}
-.opt:hover{border-color:var(--accent-line)}
-.opt input{position:absolute;opacity:0;pointer-events:none}
-.opt:has(input:checked){border-color:var(--accent);background:var(--accent-soft)}
-.opt:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:2px}
-.opt .ico{width:40px;height:40px;border-radius:10px;display:grid;place-items:center;background:var(--sunken);color:var(--muted)}
-.opt:has(input:checked) .ico{background:var(--accent);color:var(--accent-fg)}
-.opt b{display:block;font-size:.98rem}
-.opt small{display:block;font-size:.84rem;color:var(--muted);line-height:1.4;margin-top:2px}
-.opt .badge{display:inline-block;margin-top:6px;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--accent)}
-.opt .tick{position:absolute;top:10px;right:10px;width:20px;height:20px;border-radius:50%;border:1.5px solid var(--line);display:grid;place-items:center;color:transparent}
-.opt:has(input:checked) .tick{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.seg{display:inline-flex;align-self:flex-start;border:1px solid var(--line);border-radius:9px;overflow:hidden;background:var(--surface)}
+.seg label{padding:8px 16px;cursor:pointer;color:var(--muted);font-size:.92rem}
+.seg label + label{border-left:1px solid var(--line)}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg label:has(input:checked){background:var(--accent);color:var(--accent-fg);font-weight:600}
+.seg label:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:-2px}
 
-/* Preview + send */
-.progress{height:6px;border-radius:99px;background:var(--sunken);overflow:hidden}
-.progress span{display:block;height:100%;width:0;background:var(--accent);transition:width .25s}
-.chat{border-radius:12px;overflow:hidden;border:1px solid var(--line)}
-.to{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface);border-bottom:1px solid var(--line)}
-.avatar{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font-weight:700;background:var(--accent-soft);color:var(--accent)}
-.to div{min-width:0;flex:1}
-.to strong{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.to span{font-size:.84rem;color:var(--muted);font-variant-numeric:tabular-nums}
-.tag{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:3px 8px;border-radius:6px;background:var(--accent-soft);color:var(--accent);white-space:nowrap}
-.tag.bad{background:var(--bad-soft);color:var(--bad)}
-.thread{background:var(--chat);padding:16px 12px;min-height:120px;display:flex;flex-direction:column;justify-content:flex-end}
-.bubble{align-self:flex-end;max-width:88%;background:var(--bubble);color:var(--bubble-fg);padding:8px 11px;border-radius:10px 10px 2px 10px;white-space:pre-wrap;word-break:break-word;box-shadow:0 1px .5px rgba(0,0,0,.13)}
-.bubble mark{background:var(--hl);color:inherit;border-radius:3px;padding:0 2px}
-.bubble .miss{background:var(--bad-soft);color:var(--bad);border-radius:4px;padding:0 4px;font-size:.85em;font-weight:600}
-.placeholder{align-self:center;text-align:center;color:var(--muted);font-size:.9rem;padding:20px 0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.chead{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px}
+.pos{color:var(--muted);font-variant-numeric:tabular-nums}
+.who{font-weight:600;font-variant-numeric:tabular-nums}
+.tag{margin-left:auto;font-size:.8rem;font-weight:600;color:var(--accent)}
+.tag.bad{color:var(--bad)}
+.msg{white-space:pre-wrap;word-break:break-word;background:var(--sunken);border-radius:8px;padding:12px;min-height:5em}
+.msg mark{background:var(--accent-soft);color:inherit;border-radius:3px;padding:0 2px}
+.msg .miss{background:var(--bad-soft);color:var(--bad);border-radius:3px;padding:0 3px;font-size:.88em}
 
-.nav{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center}
-.btn{font:inherit;font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:6px;border-radius:10px;padding:12px 14px;border:1px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer;text-decoration:none;white-space:nowrap;touch-action:manipulation}
+.nav{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:8px}
+.nav .primary{white-space:normal;text-align:center}
+@media (max-width:420px){ .nav .btn{padding:10px 11px} }
+.btn{font:inherit;font-weight:600;display:inline-flex;align-items:center;justify-content:center;border-radius:9px;padding:10px 14px;border:1px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer;text-decoration:none;white-space:nowrap;touch-action:manipulation}
 .btn:hover{border-color:var(--accent)}
-.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-fg);font-size:1rem}
-.btn.primary:hover{filter:brightness(1.07)}
-.btn.sm{padding:7px 12px;font-size:.88rem}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
 .btn:disabled,.btn[aria-disabled="true"]{opacity:.4;pointer-events:none}
-@media (max-width:420px){ .nav .t{display:none} }
-.toast{font-size:.9rem;background:var(--accent-soft);color:var(--fg);border:1px solid var(--accent-line);padding:9px 12px;border-radius:9px}
 </style>
 </head>
 <body>
 <main class="wrap">
-  <header style="padding:0 2px 6px">
+  <div>
     <h1>Sheet Message Launcher</h1>
-    <p class="muted">Send a personal WhatsApp message to everyone in your sheet, one chat at a time. Your file stays in this browser and is never uploaded.</p>
-  </header>
+    <p class="muted">Your sheet is read in this browser only. Nothing is uploaded.</p>
+  </div>
 
-  <!-- 1. Contacts -->
-  <section class="step" id="s1">
-    <div class="sh"><span class="n"><b>1</b><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></span><h2>Add your contacts</h2></div>
+  <div class="field">
+    <span class="lbl">Contacts</span>
     <input type="file" id="file" class="vh" accept=".xlsx,.xls,.xlsm,.csv,.ods">
     <label class="drop" id="drop" for="file">
-      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
-      <strong>Drop your Excel or CSV file here</strong>
-      <span class="muted small">or tap to choose a file</span>
+      <strong id="dropTitle">Drop your Excel or CSV file, or click to choose</strong><br>
+      <span class="muted small" id="dropSub">Row 1 = column names. Column A = phone number.</span>
     </label>
-    <div class="filerow" id="fileRow" hidden>
-      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M4 9h16M4 15h16M10 3v18"/></svg>
-      <div><strong id="fname"></strong><span class="muted small" id="fmeta"></span></div>
-      <label class="btn sm" for="file">Change</label>
-    </div>
     <p class="err" id="err" hidden></p>
-    <p class="hint">First row = column names. First column = phone number (10-digit numbers get +91). <button type="button" class="link" id="sample">Download a sample sheet</button></p>
-  </section>
+    <p class="muted small">10-digit numbers get +91 added. <button type="button" class="link" id="sample">Download a sample sheet</button></p>
+  </div>
 
-  <!-- 2. Message -->
-  <section class="step" id="s2">
-    <div class="sh"><span class="n"><b>2</b><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></span><h2>Write your message</h2></div>
-    <div class="vars">
-      <span class="vlbl">Tap to insert a column</span>
-      <div class="chips" id="chips"></div>
-    </div>
-    <div class="editor empty" id="editor" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Message"
-         spellcheck="true" data-ph="Hi, thanks for registering! Your session is on…"></div>
-    <p class="hint" id="edHint">Each green tag is swapped for that contact's value. Backspace removes a tag.</p>
-  </section>
+  <div class="field">
+    <span class="lbl" id="msgLbl">Message</span>
+    <div class="chips" id="chips"></div>
+    <div class="editor empty" id="editor" contenteditable="true" role="textbox" aria-multiline="true" aria-labelledby="msgLbl"
+         spellcheck="true" data-ph="Type your message, then click a column above to add it."></div>
+  </div>
 
-  <!-- 3. Where -->
-  <section class="step done" id="s3">
-    <div class="sh"><span class="n"><b>3</b><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></span><h2>Where should chats open?</h2></div>
-    <div class="opts" role="radiogroup" aria-label="Open chats in">
-      <label class="opt">
-        <input type="radio" name="mode" value="web">
-        <span class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg></span>
-        <span><b>WhatsApp Web</b><small>Opens in a browser tab and reuses that same tab for every contact.</small><span class="badge" data-rec="web" hidden>Best for this device</span></span>
-        <span class="tick"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></span>
-      </label>
-      <label class="opt">
-        <input type="radio" name="mode" value="app">
-        <span class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M11 18h2"/></svg></span>
-        <span><b>WhatsApp app</b><small>Opens the WhatsApp app installed on your phone or computer.</small><span class="badge" data-rec="app" hidden>Best for this device</span></span>
-        <span class="tick"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></span>
-      </label>
+  <div class="field">
+    <span class="lbl">Open chats in</span>
+    <div class="seg" role="radiogroup" aria-label="Open chats in">
+      <label><input type="radio" name="mode" value="web">WhatsApp Web</label>
+      <label><input type="radio" name="mode" value="app">WhatsApp app</label>
     </div>
-    <p class="hint" id="modeHint"></p>
-  </section>
+    <p class="muted small" id="modeHint"></p>
+  </div>
 
-  <!-- 4. Send -->
-  <section class="step" id="s4" aria-live="polite">
-    <div class="sh"><span class="n"><b>4</b><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg></span><h2>Preview and send</h2><span class="aside" id="count"></span></div>
-    <div class="progress" aria-hidden="true"><span id="bar"></span></div>
-    <div class="chat">
-      <div class="to" id="to">
-        <span class="avatar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg></span>
-        <div><strong id="who"></strong><span id="num"></span></div>
-        <span class="tag" id="tag" hidden></span>
-      </div>
-      <div class="thread"><p class="bubble" id="msg"></p><p class="placeholder" id="empty"></p></div>
+  <section class="card" aria-live="polite">
+    <div class="chead">
+      <span class="pos" id="pos"></span>
+      <span class="who" id="who"></span>
+      <span class="tag" id="tag" hidden></span>
     </div>
+    <p class="msg" id="msg"></p>
     <div class="nav">
-      <button type="button" class="btn" id="prev" aria-label="Previous contact"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg><span class="t">Prev</span></button>
+      <button type="button" class="btn" id="prev">← Prev</button>
       <a class="btn primary" id="open" href="#" target="whatsapp_tab"></a>
-      <button type="button" class="btn" id="next" aria-label="Next contact"><span class="t">Next</span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg></button>
+      <button type="button" class="btn" id="next">Next →</button>
     </div>
-    <p class="toast" id="toast" hidden></p>
-    <p class="hint">After you open a chat, press Send in WhatsApp and come back. The next contact will be ready. Arrow keys ← → also move between contacts.</p>
   </section>
 </main>
 
@@ -211,11 +140,10 @@ const HAS_VAR = /\{\{[^{}]+\}\}/;
 const COUNTRY = '91'; // added to plain 10-digit numbers
 const get = (k,d) => { try{ const v = localStorage.getItem(k); return v == null ? d : v }catch(e){ return d } };
 const put = (k,v) => { try{ localStorage.setItem(k,v) }catch(e){} };
-const MOBILE = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) || matchMedia('(pointer:coarse)').matches;
-const REC = MOBILE ? 'app' : 'web';
+const MOBILE = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
 let headers = [], rows = [], i = 0, opened = new Set(), loaded = false;
-let mode = get('wsl-mode', REC);
+let mode = get('wsl-mode', MOBILE ? 'app' : 'web');
 let tpl = get('wsl-tpl', '');
 
 /* ---------- Sheet parsing ---------- */
@@ -257,7 +185,7 @@ function fillHTML(t, row){
   return out + esc(t.slice(last));
 }
 
-/* ---------- Message editor with tap-to-insert tags ---------- */
+/* ---------- Message editor: columns are inserted as tags ---------- */
 const ed = $('#editor');
 let savedRange = null;
 
@@ -305,7 +233,7 @@ function markPills(){
   ed.querySelectorAll('.pill').forEach(p => {
     const bad = loaded && !known.has(norm(p.dataset.var));
     p.classList.toggle('bad', bad);
-    p.title = bad ? `Your sheet has no column called "${p.dataset.var}"` : `Replaced with each contact's ${p.dataset.var}`;
+    p.title = bad ? `Your sheet has no column called "${p.dataset.var}"` : '';
   });
 }
 function onEdit(){
@@ -354,7 +282,7 @@ ed.addEventListener('paste', e => {
   if(HAS_VAR.test(text)){ setEditor(readEditor()); caretToEnd(); onEdit(); }
 });
 ed.addEventListener('drop', e => e.preventDefault());
-// Typed {{column}} by hand? Turn it into a tag when leaving the editor.
+// {{column}} typed by hand becomes a tag when leaving the editor.
 ed.addEventListener('blur', () => {
   const typed = [...ed.childNodes].some(n => n.nodeType === 3 && HAS_VAR.test(n.nodeValue));
   if(typed){ setEditor(readEditor()); onEdit(); }
@@ -365,65 +293,45 @@ chips.addEventListener('mousedown', e => { if(e.target.closest('.chip')) e.preve
 chips.addEventListener('click', e => { const b = e.target.closest('[data-ins]'); if(b) insertVar(b.dataset.ins); });
 
 /* ---------- Render ---------- */
-function renderChips(){
-  if(!loaded){ chips.innerHTML = '<span class="empty">Your sheet\'s columns will appear here after step 1.</span>'; return; }
-  const cols = headers.slice(1);
-  if(!cols.length){ chips.innerHTML = '<span class="empty">Your sheet only has a number column. Add columns like "name" to personalise.</span>'; return; }
-  const sample = rows[i] || rows[0];
-  chips.innerHTML = cols.map(h => {
-    const ex = sample && sample.vals[norm(h)];
-    return `<button type="button" class="chip" data-ins="${esc(h)}" title="${ex ? 'e.g. ' + esc(ex) : esc(h)}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>${esc(h)}</button>`;
-  }).join('');
-}
-
 function render(){
-  renderChips();
-  $('#s1').classList.toggle('done', loaded && rows.length > 0);
-  $('#s2').classList.toggle('done', tpl.trim() !== '');
+  const cols = headers.slice(1);
+  chips.innerHTML = !loaded
+    ? '<span class="muted small">Add a sheet to insert its columns here.</span>'
+    : !cols.length
+      ? '<span class="muted small">Your sheet only has a number column.</span>'
+      : '<span class="muted small">Insert:</span>' + cols.map(h => `<button type="button" class="chip" data-ins="${esc(h)}">${esc(h)}</button>`).join('');
 
   document.querySelectorAll('input[name=mode]').forEach(r => r.checked = r.value === mode);
-  document.querySelectorAll('[data-rec]').forEach(b => b.hidden = b.dataset.rec !== REC);
   $('#modeHint').textContent = mode === 'web'
-    ? 'Keep WhatsApp Web signed in (scan the QR code once). Each chat opens in the same tab.'
-    : 'Your device will ask to open WhatsApp. On a computer without the app, choose WhatsApp Web instead.';
+    ? 'Opens web.whatsapp.com in one browser tab, reused for every contact. Best on a computer.'
+    : 'Opens the WhatsApp app on this phone or computer. Best on a phone.';
 
   const open = $('#open');
-  open.target = 'whatsapp_tab';
-  const total = rows.length;
-  $('#count').textContent = total ? `${opened.size} of ${total} opened` : '';
-  $('#bar').style.width = total ? (opened.size / total * 100) + '%' : '0';
+  open.textContent = mode === 'web' ? 'Open in WhatsApp Web' : 'Open in WhatsApp app';
 
-  if(!total){
-    $('#to').hidden = true; $('#msg').hidden = true; $('#empty').hidden = false;
-    $('#empty').textContent = loaded ? 'No contacts found in this sheet.' : 'Add your contacts in step 1 to preview each message here.';
-    open.textContent = mode === 'web' ? 'Open in WhatsApp Web' : 'Open in WhatsApp app';
+  if(!rows.length){
+    $('#pos').textContent = ''; $('#who').textContent = loaded ? 'No contacts found in this sheet' : 'Add a sheet to start';
+    $('#msg').textContent = ''; $('#tag').hidden = true;
     open.setAttribute('aria-disabled', 'true'); open.href = '#';
     $('#prev').disabled = $('#next').disabled = true; return;
   }
 
   const row = rows[i], num = phone(row.raw), ok = num.length >= 8 && num.length <= 15;
-  const shown = num ? '+' + num : 'No number';
-  $('#to').hidden = false;
-  $('#who').textContent = shown;
-  $('#num').textContent = `Contact ${i + 1} of ${total}`;
+  $('#pos').textContent = `${i + 1} / ${rows.length}`;
+  $('#who').textContent = num ? '+' + num : 'No number';
   const tag = $('#tag');
   tag.hidden = !(opened.has(i) || !ok);
   tag.className = 'tag' + (ok ? '' : ' bad');
-  tag.textContent = ok ? '✓ Opened' : 'Invalid number';
+  tag.textContent = ok ? 'Opened' : 'Invalid number';
+  $('#msg').innerHTML = fillHTML(tpl.trim(), row);
 
-  const hasMsg = tpl.trim() !== '';
-  $('#msg').hidden = !hasMsg; $('#empty').hidden = hasMsg;
-  if(hasMsg) $('#msg').innerHTML = fillHTML(tpl.trim(), row);
-  else $('#empty').textContent = 'Write a message in step 2 to see it here.';
-
-  open.textContent = opened.has(i) ? 'Open chat again' : (mode === 'web' ? 'Open in WhatsApp Web' : 'Open in WhatsApp app');
-  if(ok && hasMsg){
+  if(ok && tpl.trim()){
     const text = encodeURIComponent(fill(tpl, row));
     open.href = mode === 'web' ? `https://web.whatsapp.com/send?phone=${num}&text=${text}` : `https://wa.me/${num}?text=${text}`;
     open.removeAttribute('aria-disabled');
   } else { open.href = '#'; open.setAttribute('aria-disabled', 'true'); }
   $('#prev').disabled = i === 0;
-  $('#next').disabled = i === total - 1;
+  $('#next').disabled = i === rows.length - 1;
 }
 
 /* ---------- File loading ---------- */
@@ -439,10 +347,8 @@ function readFile(file){
       const ws = wb.Sheets[wb.SheetNames[0]];
       setData(XLSX.utils.sheet_to_json(ws, {header:1, raw:true, defval:''}), XLSX.utils.sheet_to_json(ws, {header:1, raw:false, defval:''}));
       loaded = true;
-      $('#drop').hidden = true; $('#fileRow').hidden = false;
-      $('#fname').textContent = file.name;
-      $('#fmeta').textContent = `${rows.length} contact${rows.length === 1 ? '' : 's'} · ${headers.length} column${headers.length === 1 ? '' : 's'}`;
-      $('#toast').hidden = true;
+      $('#dropTitle').textContent = file.name;
+      $('#dropSub').textContent = `${rows.length} contact${rows.length === 1 ? '' : 's'} loaded. Click or drop to replace.`;
       markPills(); render();
     }catch(e){ showErr(e.message || 'That file could not be read as a spreadsheet.'); }
   };
@@ -450,22 +356,14 @@ function readFile(file){
   csv ? fr.readAsText(file) : fr.readAsArrayBuffer(file);
 }
 
+const drop = $('#drop');
 $('#file').addEventListener('change', e => { const f = e.target.files[0]; if(f) readFile(f); e.target.value = ''; });
-['dragenter','dragover'].forEach(ev => document.addEventListener(ev, e => {
-  if(!e.dataTransfer || ![...e.dataTransfer.types].includes('Files')) return;
-  e.preventDefault(); $('#drop').classList.add('over');
-}));
-['dragleave','drop'].forEach(ev => document.addEventListener(ev, e => {
-  if(ev === 'dragleave' && e.relatedTarget) return;
-  $('#drop').classList.remove('over');
-}));
-document.addEventListener('drop', e => {
-  const f = e.dataTransfer && e.dataTransfer.files[0];
-  if(f){ e.preventDefault(); readFile(f); }
-});
+['dragenter','dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over'); }));
+['dragleave','drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('over'); }));
+drop.addEventListener('drop', e => { const f = e.dataTransfer.files[0]; if(f) readFile(f); });
 
 $('#sample').addEventListener('click', () => {
-  if(typeof XLSX === 'undefined') return showErr('The spreadsheet library did not load. Reload the page and try again.');
+  if(typeof XLSX === 'undefined') return showErr('The spreadsheet reader did not load. Reload the page and try again.');
   const ws = XLSX.utils.aoa_to_sheet([
     ['whatsapp_number','name','date'],
     ['9876543210','Asha','12 Nov'],
@@ -477,23 +375,11 @@ $('#sample').addEventListener('click', () => {
 
 /* ---------- Mode + navigation ---------- */
 document.querySelectorAll('input[name=mode]').forEach(r => r.addEventListener('change', () => { mode = r.value; put('wsl-mode', mode); render(); }));
-$('#prev').addEventListener('click', () => { if(i > 0){ i--; $('#toast').hidden = true; render(); } });
-$('#next').addEventListener('click', () => { if(i < rows.length - 1){ i++; $('#toast').hidden = true; render(); } });
+$('#prev').addEventListener('click', () => { if(i > 0){ i--; render(); } });
+$('#next').addEventListener('click', () => { if(i < rows.length - 1){ i++; render(); } });
 $('#open').addEventListener('click', e => {
   if(e.currentTarget.getAttribute('aria-disabled') === 'true'){ e.preventDefault(); return; }
-  const at = i, who = $('#who').textContent;
-  setTimeout(() => {
-    opened.add(at);
-    const toast = $('#toast');
-    if(at < rows.length - 1){
-      i = at + 1; render();
-      toast.textContent = `✓ Opened chat with ${who}. Next up: ${$('#who').textContent}.`;
-    } else {
-      render();
-      toast.textContent = `✓ Opened chat with ${who}. That was the last contact, all done!`;
-    }
-    toast.hidden = false;
-  }, 0);
+  const at = i; setTimeout(() => { opened.add(at); render(); }, 0);
 });
 document.addEventListener('keydown', e => {
   if(e.target.isContentEditable || e.target.closest('input,textarea')) return;
@@ -501,9 +387,9 @@ document.addEventListener('keydown', e => {
   if(e.key === 'ArrowLeft') $('#prev').click();
 });
 
-/* ---------- Init ---------- */
 setEditor(tpl);
 ed.classList.toggle('empty', !tpl);
+markPills();
 render();
 })();
 </script>
