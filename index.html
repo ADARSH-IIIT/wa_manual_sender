@@ -55,13 +55,6 @@ p{margin:0}
 .pill{display:inline-block;padding:0 7px;margin:0 1px;border-radius:5px;background:var(--accent-soft);color:var(--accent);font-size:.9em;font-weight:600;line-height:1.55;user-select:all;-webkit-user-select:all;cursor:default}
 .pill.bad{background:var(--bad-soft);color:var(--bad)}
 
-.seg{display:inline-flex;align-self:flex-start;border:1px solid var(--line);border-radius:9px;overflow:hidden;background:var(--surface)}
-.seg label{padding:8px 16px;cursor:pointer;color:var(--muted);font-size:.92rem}
-.seg label + label{border-left:1px solid var(--line)}
-.seg input{position:absolute;opacity:0;pointer-events:none}
-.seg label:has(input:checked){background:var(--accent);color:var(--accent-fg);font-weight:600}
-.seg label:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:-2px}
-
 .card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:12px}
 .chead{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px}
 .pos{color:var(--muted);font-variant-numeric:tabular-nums}
@@ -72,12 +65,16 @@ p{margin:0}
 .msg mark{background:var(--accent-soft);color:inherit;border-radius:3px;padding:0 2px}
 .msg .miss{background:var(--bad-soft);color:var(--bad);border-radius:3px;padding:0 3px;font-size:.88em}
 
-.nav{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:8px}
-.nav .primary{white-space:normal;text-align:center}
-@media (max-width:420px){ .nav .btn{padding:10px 11px} }
+.nav{display:flex;justify-content:space-between;gap:8px}
+.actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.actions .btn{white-space:normal;text-align:center;padding:10px 6px}
+.btn{padding:10px 11px} }
 .btn{font:inherit;font-weight:600;display:inline-flex;align-items:center;justify-content:center;border-radius:9px;padding:10px 14px;border:1px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer;text-decoration:none;white-space:nowrap;touch-action:manipulation}
 .btn:hover{border-color:var(--accent)}
 .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+#openWeb{background:#15803d;border-color:#15803d;color:#fff}
+#openApp{background:#1d4ed8;border-color:#1d4ed8;color:#fff}
+#imessage{background:#be185d;border-color:#be185d;color:#fff}
 .btn:disabled,.btn[aria-disabled="true"]{opacity:.4;pointer-events:none}
 </style>
 </head>
@@ -99,20 +96,11 @@ p{margin:0}
     <p class="muted small">10-digit numbers get +91 added. <button type="button" class="link" id="sample">Download a sample sheet</button></p>
   </div>
 
-  <div class="field">
+  <div class="field" id="templateField">
     <span class="lbl" id="msgLbl">Message</span>
     <div class="chips" id="chips"></div>
     <div class="editor empty" id="editor" contenteditable="true" role="textbox" aria-multiline="true" aria-labelledby="msgLbl"
          spellcheck="true" data-ph="Type your message, then click a column above to add it."></div>
-  </div>
-
-  <div class="field">
-    <span class="lbl">Open chats in</span>
-    <div class="seg" role="radiogroup" aria-label="Open chats in">
-      <label><input type="radio" name="mode" value="web">WhatsApp Web</label>
-      <label><input type="radio" name="mode" value="app">WhatsApp app</label>
-    </div>
-    <p class="muted small" id="modeHint"></p>
   </div>
 
   <section class="card" aria-live="polite">
@@ -124,9 +112,14 @@ p{margin:0}
     <p class="msg" id="msg"></p>
     <div class="nav">
       <button type="button" class="btn" id="prev">← Prev</button>
-      <a class="btn primary" id="open" href="#" target="whatsapp_tab"></a>
       <button type="button" class="btn" id="next">Next →</button>
     </div>
+    <div class="actions">
+      <a class="btn primary" id="openWeb" href="#" target="whatsapp_tab" aria-disabled="true">Open in WA Web</a>
+      <a class="btn" id="openApp" href="#" aria-disabled="true">WA App</a>
+      <a class="btn" id="imessage" href="#" aria-disabled="true">iMessage</a>
+    </div>
+    <p class="muted small">Messages opens a draft; you still tap Send. Autofill depends on your device. iMessage delivery depends on the recipient and your settings.</p>
   </section>
 </main>
 
@@ -140,10 +133,9 @@ const HAS_VAR = /\{\{[^{}]+\}\}/;
 const COUNTRY = '91'; // added to plain 10-digit numbers
 const get = (k,d) => { try{ const v = localStorage.getItem(k); return v == null ? d : v }catch(e){ return d } };
 const put = (k,v) => { try{ localStorage.setItem(k,v) }catch(e){} };
-const MOBILE = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+const APPLE = /iPhone|iPad|iPod|Macintosh/i.test(navigator.userAgent);
 
 let headers = [], rows = [], i = 0, opened = new Set(), loaded = false;
-let mode = get('wsl-mode', MOBILE ? 'app' : 'web');
 let tpl = get('wsl-tpl', '');
 
 /* ---------- Sheet parsing ---------- */
@@ -301,18 +293,13 @@ function render(){
       ? '<span class="muted small">Your sheet only has a number column.</span>'
       : '<span class="muted small">Insert:</span>' + cols.map(h => `<button type="button" class="chip" data-ins="${esc(h)}">${esc(h)}</button>`).join('');
 
-  document.querySelectorAll('input[name=mode]').forEach(r => r.checked = r.value === mode);
-  $('#modeHint').textContent = mode === 'web'
-    ? 'Opens web.whatsapp.com in one browser tab, reused for every contact. Best on a computer.'
-    : 'Opens the WhatsApp app on this phone or computer. Best on a phone.';
-
-  const open = $('#open');
-  open.textContent = mode === 'web' ? 'Open in WhatsApp Web' : 'Open in WhatsApp app';
+  const web = $('#openWeb'), app = $('#openApp'), messages = $('#imessage');
+  const launchers = [web, app, messages];
 
   if(!rows.length){
     $('#pos').textContent = ''; $('#who').textContent = loaded ? 'No contacts found in this sheet' : 'Add a sheet to start';
     $('#msg').textContent = ''; $('#tag').hidden = true;
-    open.setAttribute('aria-disabled', 'true'); open.href = '#';
+    launchers.forEach(link => { link.setAttribute('aria-disabled', 'true'); link.href = '#'; });
     $('#prev').disabled = $('#next').disabled = true; return;
   }
 
@@ -323,13 +310,18 @@ function render(){
   tag.hidden = !(opened.has(i) || !ok);
   tag.className = 'tag' + (ok ? '' : ' bad');
   tag.textContent = ok ? 'Opened' : 'Invalid number';
+  const message = fill(tpl, row);
   $('#msg').innerHTML = fillHTML(tpl.trim(), row);
 
-  if(ok && tpl.trim()){
-    const text = encodeURIComponent(fill(tpl, row));
-    open.href = mode === 'web' ? `https://web.whatsapp.com/send?phone=${num}&text=${text}` : `https://wa.me/${num}?text=${text}`;
-    open.removeAttribute('aria-disabled');
-  } else { open.href = '#'; open.setAttribute('aria-disabled', 'true'); }
+  if(ok && message.trim()){
+    const text = encodeURIComponent(message);
+    messages.href = `sms:+${num}${APPLE ? '&' : '?'}body=${text}`;
+    web.href = `https://web.whatsapp.com/send?phone=${num}&text=${text}`;
+    app.href = `https://wa.me/${num}?text=${text}`;
+    launchers.forEach(link => link.removeAttribute('aria-disabled'));
+  } else {
+    launchers.forEach(link => { link.href = '#'; link.setAttribute('aria-disabled', 'true'); });
+  }
   $('#prev').disabled = i === 0;
   $('#next').disabled = i === rows.length - 1;
 }
@@ -373,14 +365,13 @@ $('#sample').addEventListener('click', () => {
   XLSX.writeFile(wb, 'sample-contacts.xlsx');
 });
 
-/* ---------- Mode + navigation ---------- */
-document.querySelectorAll('input[name=mode]').forEach(r => r.addEventListener('change', () => { mode = r.value; put('wsl-mode', mode); render(); }));
+/* ---------- Launchers + navigation ---------- */
 $('#prev').addEventListener('click', () => { if(i > 0){ i--; render(); } });
 $('#next').addEventListener('click', () => { if(i < rows.length - 1){ i++; render(); } });
-$('#open').addEventListener('click', e => {
+['#openWeb', '#openApp', '#imessage'].forEach(selector => $(selector).addEventListener('click', e => {
   if(e.currentTarget.getAttribute('aria-disabled') === 'true'){ e.preventDefault(); return; }
   const at = i; setTimeout(() => { opened.add(at); render(); }, 0);
-});
+}));
 document.addEventListener('keydown', e => {
   if(e.target.isContentEditable || e.target.closest('input,textarea')) return;
   if(e.key === 'ArrowRight') $('#next').click();
