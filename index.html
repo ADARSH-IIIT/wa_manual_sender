@@ -66,14 +66,15 @@ p{margin:0}
 .msg .miss{background:var(--bad-soft);color:var(--bad);border-radius:3px;padding:0 3px;font-size:.88em}
 
 .nav{display:flex;justify-content:space-between;gap:8px}
-.actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.actions{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
 .actions .btn{white-space:normal;text-align:center;padding:10px 6px}
-.btn{padding:10px 11px} }
+@media (max-width:420px){ .nav .btn{padding:10px 11px} .actions{grid-template-columns:repeat(2,minmax(0,1fr))} }
 .btn{font:inherit;font-weight:600;display:inline-flex;align-items:center;justify-content:center;border-radius:9px;padding:10px 14px;border:1px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer;text-decoration:none;white-space:nowrap;touch-action:manipulation}
 .btn:hover{border-color:var(--accent)}
 .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
 #openWeb{background:#15803d;border-color:#15803d;color:#fff}
 #openApp{background:#1d4ed8;border-color:#1d4ed8;color:#fff}
+#openPersonal{background:#0f766e;border-color:#0f766e;color:#fff}
 #imessage{background:#be185d;border-color:#be185d;color:#fff}
 .btn:disabled,.btn[aria-disabled="true"]{opacity:.4;pointer-events:none}
 </style>
@@ -116,7 +117,8 @@ p{margin:0}
     </div>
     <div class="actions">
       <a class="btn primary" id="openWeb" href="#" target="whatsapp_tab" aria-disabled="true">Open in WA Web</a>
-      <a class="btn" id="openApp" href="#" aria-disabled="true">WA App</a>
+      <a class="btn" id="openPersonal" href="#" aria-disabled="true">WA Personal</a>
+      <a class="btn" id="openApp" href="#" aria-disabled="true">WA Business</a>
       <a class="btn" id="imessage" href="#" aria-disabled="true">iMessage</a>
     </div>
     <p class="muted small">Messages opens a draft; you still tap Send. Autofill depends on your device. iMessage delivery depends on the recipient and your settings.</p>
@@ -134,6 +136,11 @@ const COUNTRY = '91'; // added to plain 10-digit numbers
 const get = (k,d) => { try{ const v = localStorage.getItem(k); return v == null ? d : v }catch(e){ return d } };
 const put = (k,v) => { try{ localStorage.setItem(k,v) }catch(e){} };
 const APPLE = /iPhone|iPad|iPod|Macintosh/i.test(navigator.userAgent);
+const ANDROID = /Android/i.test(navigator.userAgent);
+// Android can target a specific WhatsApp app; other platforms open whichever one is the default.
+const waAppLink = (num, text, pkg) => ANDROID
+  ? `intent://send?phone=${num}&text=${text}#Intent;scheme=whatsapp;package=${pkg};S.browser_fallback_url=${encodeURIComponent(`https://wa.me/${num}?text=${text}`)};end`
+  : `https://wa.me/${num}?text=${text}`;
 
 let headers = [], rows = [], i = 0, opened = new Set(), loaded = false;
 let tpl = get('wsl-tpl', '');
@@ -293,8 +300,8 @@ function render(){
       ? '<span class="muted small">Your sheet only has a number column.</span>'
       : '<span class="muted small">Insert:</span>' + cols.map(h => `<button type="button" class="chip" data-ins="${esc(h)}">${esc(h)}</button>`).join('');
 
-  const web = $('#openWeb'), app = $('#openApp'), messages = $('#imessage');
-  const launchers = [web, app, messages];
+  const web = $('#openWeb'), personal = $('#openPersonal'), app = $('#openApp'), messages = $('#imessage');
+  const launchers = [web, personal, app, messages];
 
   if(!rows.length){
     $('#pos').textContent = ''; $('#who').textContent = loaded ? 'No contacts found in this sheet' : 'Add a sheet to start';
@@ -317,7 +324,8 @@ function render(){
     const text = encodeURIComponent(message);
     messages.href = `sms:+${num}${APPLE ? '&' : '?'}body=${text}`;
     web.href = `https://web.whatsapp.com/send?phone=${num}&text=${text}`;
-    app.href = `https://wa.me/${num}?text=${text}`;
+    personal.href = waAppLink(num, text, 'com.whatsapp');
+    app.href = waAppLink(num, text, 'com.whatsapp.w4b');
     launchers.forEach(link => link.removeAttribute('aria-disabled'));
   } else {
     launchers.forEach(link => { link.href = '#'; link.setAttribute('aria-disabled', 'true'); });
@@ -368,7 +376,7 @@ $('#sample').addEventListener('click', () => {
 /* ---------- Launchers + navigation ---------- */
 $('#prev').addEventListener('click', () => { if(i > 0){ i--; render(); } });
 $('#next').addEventListener('click', () => { if(i < rows.length - 1){ i++; render(); } });
-['#openWeb', '#openApp', '#imessage'].forEach(selector => $(selector).addEventListener('click', e => {
+['#openWeb', '#openPersonal', '#openApp', '#imessage'].forEach(selector => $(selector).addEventListener('click', e => {
   if(e.currentTarget.getAttribute('aria-disabled') === 'true'){ e.preventDefault(); return; }
   const at = i; setTimeout(() => { opened.add(at); render(); }, 0);
 }));
